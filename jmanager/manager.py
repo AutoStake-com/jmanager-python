@@ -42,7 +42,6 @@ class Manager(threading.Thread):
 
             config_manager_settings = self._config.get_config_manager()
             self._timeout_between_restarts = config_manager_settings['manager']['timeout_between_restarts']
-            self._leaders_for_new_epoch = config_manager_settings['manager']['leaders_for_new_epoch']
             self._min_scheduled_time_difference = config_manager_settings['manager']['min_scheduled_time_difference']
             self._send_slots_within_time = config_manager_settings['manager']['send_slots_within']
             self._slots_sent_epoch = 0

@@ -2,7 +2,6 @@
   "common_config": {
     "manager":{
       "timeout_between_restarts": 650,
-      "leaders_for_new_epoch": 300,
       "epoch_start_time": {
         "hour": 19,
         "minute": 13,
@@ -69,7 +68,6 @@
   [
     {
         "node_name": "node_one",
-        "priority": 1,
         "jmanager_settings": {
             "node_path": "/home/tiliaio/jormungandr/node_one",
             "supervisor_service_name": "jnode_one",
@@ -116,7 +114,6 @@
     },
     {
         "node_name": "node_two",
-        "priority": 2,
         "jmanager_settings": {
             "node_path": "/home/tiliaio/jormungandr/node_two",
             "supervisor_service_name": "jnode_two",
