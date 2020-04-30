@@ -142,6 +142,13 @@ jnode_two.conf:
 
 autostart tells supervisor to start the process on boot while autorestart tells it to restart in the event it exits. We want this to be false since it's the job of jmanager to manage the processes. Jmanager could spawn it's own processes instead of having them defined as supervisor processes but supervisor is a general process management tool and could be used without jmanager. We've also defined where jormungandr should store the log files and what conditions need to be met to rotate the logs (when file reaches 20 MB, keep at most 10 files).
 
+Enable REST API for supervisord by adding the following line into /etc/supervisor/supervisord.conf:
+
+    [supervisord]
+    [inet_http_server]
+    port = 127.0.0.1:9001
+
+
 ### Creating scrpit for starting jormungandr
 
 Jormungandr managed by supervisor gets started by executing the following script (jgstart.sh):
