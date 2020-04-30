@@ -1,0 +1,37 @@
+{
+  "log": [
+    {
+      "format": "plain",
+      "level": "info",
+      "output": "stderr"
+    }
+  ],
+  "p2p": {
+    "listen_address": "/ip4/0.0.0.0/tcp/<port>",
+    "public_id": "<node_public_id>",
+    "public_address": "/ip4/<node_public_ip>/tcp/<port>",
+     "topics_of_interest": {
+      "blocks": "high",
+      "messages": "high"
+    },
+    "max_connections": 768,
+    "gossip_interval": "10s",
+    "trusted_peers": [
+  {
+    "address": "/ip4/<relay_node_ip>/tcp/<relay_port>",
+    "id": "<relay_public_id>"
+  }
+]
+  },
+  "rest": {
+    "listen": "<rest_api_ip>:<port>"
+  },
+  "leadership": {
+    "logs_capacity": 1024
+  }, 
+  "storage": "/home/tiliaio/jormungandr/db/",
+  "mempool": {
+      "pool_max_entries": 30000,
+      "log_max_entries": 300000
+  }
+}

@@ -127,3 +127,8 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# jmanager configuration
+jmanager_config_prod.json
+config_template_prod.json
+jmanager/logs/

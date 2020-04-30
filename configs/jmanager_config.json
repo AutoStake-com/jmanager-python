@@ -1,0 +1,161 @@
+{
+  "common_config": {
+    "manager":{
+      "timeout_between_restarts": 650,
+      "leaders_for_new_epoch": 300,
+      "epoch_start_time": {
+        "hour": 19,
+        "minute": 13,
+        "second": 0
+      },
+      "min_scheduled_time_difference": 600,
+      "pool_id_file": "/home/tiliaio/jormungandr/stake_pool_id_TILIA_TILX",
+      "genesis_hash_file": "/home/tiliaio/jormungandr/genesis_hash",
+      "send_slots_within": 180
+    },
+    "pooltool": {
+      "status_summary": {
+        "url": "https://pooltool.s3-us-west-2.amazonaws.com/stats/stats.json",
+        "refresh_rate": 60
+      },
+      "send_tip": {
+        "url": "https://api.pooltool.io/v0/sharemytip",
+        "refresh_rate": 15
+      },
+      "send_slots": {
+        "url": "https://api.pooltool.io/v0/sendlogs",
+        "key_path": "/tmp/keystorage",
+        "verify_slots_gpg": 1,
+        "verify_slots_hash": 0
+      },
+      "user_id": "<pool_tool_user_id>"
+    },
+    "jormungandr": {
+      "supervisor_rest_api_url": "http://localhost:9001/RPC2",
+      "common_dir": "/home/tiliaio/jormungandr",
+      "secret": "node_secret_TILIA_TILX",
+      "restarts_log_filename": "restarts.csv",
+      "timeouts": {
+        "refresh_interval": 5,
+        "tip_timeout": 90,
+        "leaders_refresh_interval": 15
+      },
+      "tip_diff_threshold": 7
+    },
+    "email": {
+      "email_alerts": 1,
+      "port": 465,
+      "smtp_server": "<smtp server>",
+      "sender": "<sender email account>",
+      "password": "<sender email account password>",
+      "recipient": "<recepient email address>",
+      "templates": {
+        "stuck": {
+          "subject": "[Tilia I/O] Node stuck - restarting ({time})",
+          "message": "[{timestamp}]:\nNode '{node_name}' has been stuck for more than {timeout} minutes. Restarting node."
+        },
+        "bootstrap_restart": {
+            "subject": "[Tilia I/O] Restarting Node again ({time})",
+            "message": "[{timestamp}]:\nCould not bootstrap node '{node_name}' in {timeout} minutes. Restarting node again.'"
+        },
+        "slots_assigned": {
+          "subject": "[Tilia I/O] Slots assigned ({time})",
+          "message": "[{timestamp}]:\n\nSlots assigned to '{node_name}':\n{slots}"
+        }
+      }
+    }
+  }, 
+  "nodes_config":
+  [
+    {
+        "node_name": "node_one",
+        "priority": 1,
+        "jmanager_settings": {
+            "node_path": "/home/tiliaio/jormungandr/node_one",
+            "supervisor_service_name": "jnode_one",
+            "default_trusted_peers": [
+                {
+                    "address": "/ip4/52.9.132.248/tcp/3000",
+                    "id": "671a9e7a5c739532668511bea823f0f5c5557c99b813456c"
+                  },
+                  {
+                    "address": "/ip4/52.8.15.52/tcp/3000",
+                    "id": "18bf81a75e5b15a49b843a66f61602e14d4261fb5595b5f5"
+                  },
+                  {
+                    "address": "/ip4/13.114.196.228/tcp/3000",
+                    "id": "7e1020c2e2107a849a8353876d047085f475c9bc646e42e9"
+                  },
+                  {
+                    "address": "/ip4/13.112.181.42/tcp/3000",
+                    "id": "52762c49a84699d43c96fdfe6de18079fb2512077d6aa5bc"
+                  }
+            ]
+        },
+        "config":
+        {
+          "p2p": {
+            "listen_address": "/ip4/0.0.0.0/tcp/3100",
+            "public_id": "<public_node_id>",
+            "public_address": "/ip4/<public_ip>/tcp/3100",
+            "max_connections": 1024,
+            "gossip_interval": "20s",
+            "trusted_peers": 
+            [
+                {
+                    "address": "/ip4/<node_two_ip>/tcp/3110",
+                    "id": "<node_two_id>"
+                }
+            ]
+          },
+          "rest": {
+            "listen": "127.0.0.1:3101"
+          },
+          "storage": "/home/tiliaio/jormungandr/node_one/db/"
+        }
+    },
+    {
+        "node_name": "node_two",
+        "priority": 2,
+        "jmanager_settings": {
+            "node_path": "/home/tiliaio/jormungandr/node_two",
+            "supervisor_service_name": "jnode_two",
+            "default_trusted_peers": [
+                  {
+                    "address": "/ip4/3.125.75.156/tcp/3000",
+                    "id": "22fb117f9f72f38b21bca5c0f069766c0d4327925d967791"
+                  },
+                  {
+                    "address": "/ip4/52.28.91.178/tcp/3000",
+                    "id": "23b3ca09c644fe8098f64c24d75d9f79c8e058642e63a28c"
+                  },
+                  {
+                    "address": "/ip4/3.124.116.145/tcp/3000",
+                    "id": "99cb10f53185fbef110472d45a36082905ee12df8a049b74"
+                  }
+            ]
+        },
+        "config":
+            {
+          "p2p": {
+            "listen_address": "/ip4/0.0.0.0/tcp/3110",
+            "public_id": "<public_node_id>",
+            "public_address": "/ip4/<public_node_ip>/tcp/3110",
+            "max_connections": 768,
+            "gossip_interval": "15s",
+            "trusted_peers": 
+            [
+                {
+                  "address": "/ip4/<node_one_ip>/tcp/3100",
+                  "id": "<node_one_id>"
+                }
+            ]
+          },
+          "rest": {
+            "listen": "127.0.0.1:3111"
+          },
+          "storage": "/home/tiliaio/jormungandr/node_two/db/"
+        }
+    }
+  ]
+}
