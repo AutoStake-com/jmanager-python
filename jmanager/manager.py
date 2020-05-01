@@ -133,6 +133,9 @@ class Manager(threading.Thread):
 
     def _get_epoch_start_datetime(self):
         dt = datetime.utcnow()
+        if (dt.hour * 3600 + dt.minute * 60 + dt.second) < (self._epoch_start_time['hour'] * 3600 + self._epoch_start_time['minute'] * 60 + self._epoch_start_time['second']):
+            dt = dt - timedelta(days=1)
+
         return datetime(dt.year, dt.month, dt.day, self._epoch_start_time['hour'], self._epoch_start_time['minute'], self._epoch_start_time['second'])
 
     def _restart_nodes_for_slot_assignments(self):
@@ -194,14 +197,12 @@ class Manager(threading.Thread):
             return
 
         current_epoch = self._leader_nodes[0]['node'].get_current_epoch()
-        if not self._slots_sent_epoch == current_epoch:
+        if self._slots_sent_epoch == current_epoch:
             return
 
         epoch_start_time = self._get_epoch_start_datetime()
         dt = datetime.utcnow()
-        log.debug('Check if slots OK')
         if dt > epoch_start_time:
-            log.debug('Send slots2.')
             if (dt - epoch_start_time).seconds > self._send_slots_within_time and (dt - epoch_start_time).seconds < (self._send_slots_within_time + 60):
                 self._pool_tool.send_slots(self._leader_nodes[0]['node'].get_api_endpoint(), self._pool_id, self._genesis_hash)
                 self._slots_sent_epoch = current_epoch

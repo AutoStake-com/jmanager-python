@@ -283,9 +283,11 @@ class Jormungandr(threading.Thread):
             return False    # we don't have the info yet
 
         if self._previous_node_stats['lastBlockHeight'] == int(self._node_stats['lastBlockHeight']) and (datetime.now() - self._node_stats_time).seconds > self._tip_timeout:
+            log.warn("Node's tip has been the same ({}) for {} seconds.".format(self._node_stats['lastBlockHeight'], self._tip_timeout))
             return True
 
         if abs(int(self._node_stats['lastBlockHeight']) - max_tip) > self._tip_diff_threshold:
+            log.warn("Node is off by more than {} from max tip {}".format(self._tip_diff_threshold, max_tip))
             return True
 
         return False

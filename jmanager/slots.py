@@ -14,7 +14,7 @@ log = getLogger(utils.get_module_name(os.path.basename(__file__)))
 
 class Slots():
     def __init__(self, config, rest_api_url, pool_id, genesis_hash):
-        self._url = "{base_url}/api/v0".format(base_url=rest_api_url) 
+        self._url = rest_api_url 
         self._config = config
         self._node_stats = None
         self._leaders_logs = None
@@ -59,7 +59,7 @@ class Slots():
 
     def _get_leaders_logs(self):
         try:
-            r = requests.get("{}/leaders/logs".format(self.url))
+            r = requests.get("{}/leaders/logs".format(self._url))
             if r.status_code == 200:
                 return r.json()
             else:
@@ -164,7 +164,7 @@ class Slots():
         data = {
             'currentepoch': str(self._current_epoch),
             'poolid': self._pool_id,
-            'genesispref': self._genesis_hash[0,7],
+            'genesispref': self._genesis_hash[0:7],
             'userid': self._config['user_id'],
             'assigned_slots': str(len(self._current_slots)),
             'previous_epoch_key': previous_epoch_key,
@@ -214,6 +214,16 @@ class Slots():
 
         self._send_data(data)
 
+    def _create_path(self, key_path):
+        if not os.path.exists(key_path):
+            log.info("Key directory doesn't exist. Making the directory ...")
+            try:
+                os.mkdir(key_path)
+            except Exception as e:
+                log.error('Error: Failed to create dir {}'.format(key_path))
+                log.error("An exception occured", exc_info=True)
+                raise e
+
     def process(self):
         self._node_stats = self._get_node_stats()
         if self._node_stats is None:
@@ -238,13 +248,3 @@ class Slots():
             self._verify_slots_hash()
         else:
             self._no_verification_method()
-
-    def create_path(self, key_path):
-        if not os.path.exists(key_path):
-            log.info("Key directory doesn't exist. Making the directory ...")
-            try:
-                os.mkdir(key_path)
-            except Exception as e:
-                log.error('Error: Failed to create dir {}'.format(key_path))
-                log.error("An exception occured", exc_info=True)
-                raise e
