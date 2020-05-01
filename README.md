@@ -63,6 +63,7 @@ Go to the project directory:
     tiliaio@tilx:~/jormungandr$ cd jmanager-python
 
 Create virtual environment into venv directory:
+
     tiliaio@tilx:~/jormungandr/jmanager-python$ virtualenv -p python3.6 venv
 
 Activate virtual environment:
@@ -74,6 +75,7 @@ Activate virtual environment:
     tiliaio@tilx:~/jormungandr/jmanager-python$ pip install -r requirements.txt
 
 To deactiave a virtual environment:
+
     tiliaio@tilx:~/jormungandr/jmanager-python$ deactivate
 
 ## Putting everything together
@@ -212,3 +214,9 @@ Start jmanager:
 
 Once jmanager is started it will detected that jnode_two is not running and will start it.
 
+
+# Donations
+
+If you find jManager useful you can buy us a coffee (accepting real ADA at):
+
+    DdzFFzCqrht2RLeYbZFr7dYPH9AxQM9NxeQkEsKt6Kbw1Ujzu89GCceox5aeed3NcMMELxBrGdUfiCBUACXuzVuJFajuXqaZLTP6uvFD
