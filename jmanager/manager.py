@@ -189,7 +189,7 @@ class Manager(threading.Thread):
                             else:
                                 log.warning('Node {} does not report any slots assigned while other nodes do: {}'.format(node.get_name(), item['nodes']))
                         else:
-                            log.error('Nodes report different slots!')
+                            pass
 
     def _send_slots(self):
         # send slots too pool tool (only send slots if between _send_slots_within_time in epoch and _send_slots_within_time + 60 )
