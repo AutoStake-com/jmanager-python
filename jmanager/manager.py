@@ -221,7 +221,7 @@ class Manager(threading.Thread):
         slots_assigned = self._leader_nodes[0]['node'].get_leaders_logs()
         self._slots_assigned.append({'epoch': current_epoch, 'nodes': [self._leader_nodes[0]['node'].get_name()], 'slots': slots_assigned})
         log.debug(json.dumps(slots_assigned, indent=4))
-        self._send_email('slots_assigned', {'timestamp': datetime.now(), 'node_name': '', 'slots': slots_assigned})
+        self._send_email('slots_assigned', {'node_name': '', 'slots': slots_assigned})
 
         # remove any slots from previous epoch
         if len(self._slots_assigned) > 1:

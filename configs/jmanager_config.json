@@ -50,16 +50,16 @@
       "recipient": "<recepient email address>",
       "templates": {
         "stuck": {
-          "subject": "[Tilia I/O] Node stuck - restarting ({time})",
+          "subject": "[Tilia I/O] Node stuck - restarting ({timestamp})",
           "message": "[{timestamp}]:\nNode '{node_name}' has been stuck for more than {timeout} minutes. Restarting node."
         },
         "bootstrap_restart": {
-            "subject": "[Tilia I/O] Restarting Node again ({time})",
+            "subject": "[Tilia I/O] Restarting Node again ({timestamp})",
             "message": "[{timestamp}]:\nCould not bootstrap node '{node_name}' in {timeout} minutes. Restarting node again.'"
         },
         "slots_assigned": {
-          "subject": "[Tilia I/O] Slots assigned ({time})",
-          "message": "[{timestamp}]:\n\nSlots assigned to '{node_name}':\n{slots}"
+          "subject": "[Tilia I/O] Slots assigned ({timestamp})",
+          "message": "[{timestamp}]:\n\nSlots assigned:\n{slots}"
         }
       }
     }

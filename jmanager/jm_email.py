@@ -34,24 +34,25 @@ class Email():
         log.debug("Got email params: {} , {}".format(email_key, data))
         # Create a secure SSL context
         context = ssl.create_default_context()
-        
+        data['timestamp'] = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
+
         msg = self._templates[email_key]['message']
         if email_key == 'stuck':
-            if data.get('timestamp') == None or data.get('timeout') == None or data.get('node_name') == None:
+            if data.get('timeout') == None or data.get('node_name') == None:
                 log.error("Error: Error while trying to send email on 'node stuck'")
                 return
-            msg = msg.format(timestamp=datetime.now(), timeout=data['timeout'], node_name=data['node_name'])
+            msg = msg.format(timestamp=data['timestamp'], timeout=data['timeout'], node_name=data['node_name'])
             log.info("Mail message: {}".format(msg))
         elif email_key == 'bootstrap_restart':
-            if data.get('timestamp') is None or data.get('timeout') is None or data.get('node_name') is None:
+            if data.get('timeout') is None or data.get('node_name') is None:
                 log.error("Error: Error while trying to send email on 'boostrap restart'")
                 return
-            msg = msg.format(timestamp=datetime.now(), timeout=data['timeout'], node_name=data['node_name'])
+            msg = msg.format(timestamp=data['timestamp'], timeout=data['timeout'], node_name=data['node_name'])
             log.info("Mail message: {}".format(msg))
         elif email_key == 'leader':
             pass
         elif email_key == 'slots_assigned':
-            if data.get('timestamp') is None or data.get('slots') is None or data.get('node_name') is None:
+            if data.get('slots') is None or data.get('node_name') is None:
                 log.error("Error: Error while trying to send email on 'slots assigned'")
                 return
             msg = msg.format(timestamp=data['timestamp'], node_name=data['node_name'], slots=json.dumps(data['slots'], indent=4))
@@ -64,7 +65,7 @@ class Email():
             server.login(self._sender_email, self._password)
             message = """From: {sender}\nSubject: {subject}\n\n
                 {msg}""".format(sender=self._sender_email, 
-                    subject=self._templates[email_key]['subject'].format(time=datetime.now()),
+                    subject=self._templates[email_key]['subject'].format(timestamp=data['timestamp']),
                     msg=msg)
             server.sendmail(self._sender_email, self._recipient, message)
         except Exception as e:
