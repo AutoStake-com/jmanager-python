@@ -183,7 +183,7 @@ class Manager(threading.Thread):
 
                                     closest_scheduled_slot = ts_dt if ts_dt < closest_scheduled_slot else closest_scheduled_slot
 
-                                if self._is_any_other_node_up(node) and (closest_scheduled_slot - datetime.utcnow()).seconds > self._min_scheduled_time_difference and node.get_state() == State.STARTED:
+                                if self._is_any_other_node_up(node) and closest_scheduled_slot != None and (closest_scheduled_slot - datetime.utcnow()).seconds > self._min_scheduled_time_difference and node.get_state() == State.STARTED:
                                     log.debug("Restarting node so it can get its assigned slots schedule.")
                                     node.restart(reason='leader logs')
                             else:
