@@ -81,7 +81,7 @@ class PoolTool():
         }
 
     def get_max_tip(self):
-        return 0 if self._status_summary is None else self._status_summary['max']
+        return 0 if self._status_summary is None else self._status_summary['majoritymax']
     
     def send_slots(self, rest_api_url, pool_id, genesis_hash):
         slots = Slots(self._config_pool_tool, rest_api_url, pool_id, genesis_hash)
