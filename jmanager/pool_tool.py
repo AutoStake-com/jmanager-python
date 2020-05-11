@@ -16,7 +16,7 @@ class PoolTool():
         self._config = config
         self._config_last_updated = None
         self._update_config_if_new()
-        self._platform_name = 'jmanager.py'
+        self._platform_name = 'jmanager.py by Tilia IO'
         self._tip_data = None
         self._tip_last_updated = datetime.utcnow()
 
@@ -77,7 +77,7 @@ class PoolTool():
             "lastslot": int('0x' + last_block[24:24+8], 16),
             "lastepoch": int('0x' + last_block[16:16+8], 16),
             "jormver": stats['version'],
-            "platformName": self._platform_name
+            "platform": self._platform_name
         }
 
     def get_max_tip(self):
