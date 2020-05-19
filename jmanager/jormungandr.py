@@ -214,6 +214,7 @@ class Jormungandr(threading.Thread):
 
     def is_supervisor_node_up(self):
         pcode = self.get_supervisor_service_state()
+        log.debug("Service {} state: {}".format(self.get_name(), pcode))
 
         if pcode == 20 or pcode == 10:
             return True
@@ -298,12 +299,12 @@ class Jormungandr(threading.Thread):
 
         return (datetime.now() - self._bootstrap_started_at_time).seconds
 
-    def stop_node(self, force = True, reason=''):
-        if self.is_supervisor_node_up() and (self._state == State.STARTED or self._state == State.BOOTSTRAPPING or force):
+    def stop_node(self, force = False, reason=''):
+        if self.is_supervisor_node_up() and (self._state == State.STARTED or self._state == State.BOOTSTRAPPING or force == True):
             self._log_action('stop', reason)
 
             success = self._server.supervisor.stopProcess(self._supervisor_service_name)
-            if not success:
+            if success != True or self.is_supervisor_node_up():
                 raise SupervisorError("Failed to stop {}".format(self._supervisor_service_name), {'code': 1})
 
             self._set_state(State.STOPPED)
@@ -318,7 +319,7 @@ class Jormungandr(threading.Thread):
 
             success = self._server.supervisor.startProcess(self._supervisor_service_name)
 
-            if not success:
+            if success != True or not self.is_supervisor_node_up():
                 raise SupervisorError("Failed to start {}".format(self._supervisor_service_name), {'code': 1})
 
             log.info("Service {} started.".format(self._supervisor_service_name))
@@ -330,7 +331,7 @@ class Jormungandr(threading.Thread):
             log.info("Service {} is already started.".format(self.get_name()))
 
     def restart(self, reason=''):
-        self.stop_node(reason)
+        self.stop_node(reason=reason)
         self.start_node(reason)
 
     def is_leader(self):
@@ -428,6 +429,6 @@ class Jormungandr(threading.Thread):
             except JcliError as e:
                 e.print_error()
                 if e._errors['err_code'] == JError.FAILED_REST_REQUEST or e._errors['err_code'] == JError.ADDRESS_ALREADY_IN_USE:
-                    self.stop_node()
+                    self.stop_node(force=True, reason='JcliError: {}'.format(e._errors['err_code']))
             finally:
                 time.sleep(self._refresh_interval)
