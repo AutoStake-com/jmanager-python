@@ -203,7 +203,8 @@ class Manager(threading.Thread):
         epoch_start_time = self._get_epoch_start_datetime()
         dt = datetime.utcnow()
         if dt > epoch_start_time:
-            if (dt - epoch_start_time).seconds > self._send_slots_within_time and (dt - epoch_start_time).seconds < (self._send_slots_within_time + 60):
+            dtd = (dt - epoch_start_time).seconds
+            if dtd > self._send_slots_within_time and dtd < (self._send_slots_within_time + 60):
                 self._pool_tool.send_slots(self._leader_nodes[0]['node'].get_api_endpoint(), self._pool_id, self._genesis_hash)
                 self._slots_sent_epoch = current_epoch
                 log.debug('Slots sent!')
@@ -217,6 +218,11 @@ class Manager(threading.Thread):
         for item in self._slots_assigned:
             if item['epoch'] == current_epoch:
                 return
+
+        epoch_start_time = self._get_epoch_start_datetime()
+        dt = (datetime.utcnow() - epoch_start_time).seconds
+        if dt > 0 and dt < self._send_slots_within_time and len(self._slots_assigned) == 0:
+            return
 
         slots_assigned = self._leader_nodes[0]['node'].get_leaders_logs()
         self._slots_assigned.append({'epoch': current_epoch, 'nodes': [self._leader_nodes[0]['node'].get_name()], 'slots': slots_assigned})

@@ -59,7 +59,7 @@
         },
         "slots_assigned": {
           "subject": "[Tilia I/O] Slots assigned ({timestamp})",
-          "message": "[{timestamp}]:\n\nSlots assigned:\n{slots}"
+          "message": "[{timestamp}]:\n\n{slots_count} slots assigned:\n{slots}"
         }
       }
     }

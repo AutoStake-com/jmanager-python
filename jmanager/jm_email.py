@@ -55,7 +55,7 @@ class Email():
             if data.get('slots') is None or data.get('node_name') is None:
                 log.error("Error: Error while trying to send email on 'slots assigned'")
                 return
-            msg = msg.format(timestamp=data['timestamp'], node_name=data['node_name'], slots=json.dumps(data['slots'], indent=4))
+            msg = msg.format(timestamp=data['timestamp'], node_name=data['node_name'], slots_count=len(data['slots']), slots=json.dumps(data['slots'], indent=4))
             log.info("Mail message: {}".format(msg))
         else:
             return
