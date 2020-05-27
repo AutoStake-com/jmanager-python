@@ -81,6 +81,8 @@ class Manager(threading.Thread):
             if new_tip != None and new_tip > self._max_node_reported_tip:
                 self._max_node_reported_tip = new_tip
                 self._pool_tool.refresh_data_for_tip_update(node.get_last_stats(), node.get_last_block(), self._pool_id, self._genesis_hash)
+        else:
+            log.warning('Node {} not up (state: {})!'.format(node.get_name(), node.get_state()))
 
     # gets the max tip of the tips reported by running nodes
     def _get_nodes_max_tip(self):
@@ -221,7 +223,8 @@ class Manager(threading.Thread):
 
         epoch_start_time = self._get_epoch_start_datetime()
         dt = (datetime.utcnow() - epoch_start_time).seconds
-        if dt > 0 and dt < self._send_slots_within_time and len(self._slots_assigned) == 0:
+        items_count = len(self._slots_assigned)
+        if dt > 0 and dt < self._send_slots_within_time and items_count <= 1:
             return
 
         slots_assigned = self._leader_nodes[0]['node'].get_leaders_logs()

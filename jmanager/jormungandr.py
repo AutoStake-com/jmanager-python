@@ -14,7 +14,7 @@ from xmlrpc.client import ServerProxy
 import utils
 import threading
 
-threadLock = threading.Lock()
+threadLock = threading.RLock()
 
 log = getLogger(utils.get_module_name(os.path.basename(__file__)))
 
@@ -106,82 +106,81 @@ class Jormungandr(threading.Thread):
         self._leaders = None
 
     def _get_stats(self):
-        threadLock.acquire()
-        command = [self._jcli, "rest", "v0", "node", "stats", "get", "-h", self._host, "--output-format", "json"]
-        proc = Popen(command, stdout=PIPE, stderr=PIPE)
-        stdout, stderr = proc.communicate()
-        if proc.returncode != 0:
-            err_msg = stderr.decode()
-            # jormungandr returns 1 on error, so we parse the output to get the error type
-            msg_node_down = "failed to make a REST request"
-            msg_address_already_in_use = "Address already in use"
+        try:
+            threadLock.acquire()
+            command = [self._jcli, "rest", "v0", "node", "stats", "get", "-h", self._host, "--output-format", "json"]
+            proc = Popen(command, stdout=PIPE, stderr=PIPE)
+            stdout, stderr = proc.communicate()
+            if proc.returncode != 0:
+                err_msg = stderr.decode()
+                # jormungandr returns 1 on error, so we parse the output to get the error type
+                msg_node_down = "failed to make a REST request"
+                msg_address_already_in_use = "Address already in use"
 
-            err_code = JError.UNKNOWN
-            if err_msg.find(msg_node_down) > -1:
-                err_code = JError.FAILED_REST_REQUEST
-            elif err_msg.find(msg_address_already_in_use) > 0:
-                err_code = JError.ADDRESS_ALREADY_IN_USE
+                err_code = JError.UNKNOWN
+                if err_msg.find(msg_node_down) > -1:
+                    err_code = JError.FAILED_REST_REQUEST
+                elif err_msg.find(msg_address_already_in_use) > 0:
+                    err_code = JError.ADDRESS_ALREADY_IN_USE
 
-            self.set_state_from_supervisor()
-
-            threadLock.release()
-            raise JcliError('Could not get node stats.', err = {'proc_ret_code': proc.returncode, 'err_code': err_code, 'stdout': stdout.decode(), 'stderr': stderr.decode()})
-
-        if proc.returncode == 0:
-            node_stats = json.loads(stdout.decode())
-            state = node_stats.get('state')
-            if state == 'Bootstrapping':
-                self._set_state(State.BOOTSTRAPPING)
-                threadLock.release()
-                return None
-            elif node_stats.get('lastBlockHeight'):
-                self._set_state(State.STARTED)
-            else:
                 self.set_state_from_supervisor()
 
-                self._clean_up()
-                threadLock.release()
-                return None
+                raise JcliError('Could not get node stats.', err = {'proc_ret_code': proc.returncode, 'err_code': err_code, 'stdout': stdout.decode(), 'stderr': stderr.decode()})
 
-            if self._previous_node_stats is None:
-                self._node_stats_time = datetime.now()
-                self._previous_node_stats = node_stats
-                self._node_stats = node_stats
-            else:
-                if node_stats['lastBlockHeight'] > self._previous_node_stats['lastBlockHeight']:
-                    self._previous_node_stats = self._node_stats
-                    self._node_stats = node_stats
-                    self._node_stats_time = datetime.now()
+            exit_func = False
+            if proc.returncode == 0:
+                node_stats = json.loads(stdout.decode())
+                state = node_stats.get('state')
+                if state == 'Bootstrapping':
+                    self._set_state(State.BOOTSTRAPPING)
+                    exit_func = True
+                elif node_stats.get('lastBlockHeight'):
+                    self._set_state(State.STARTED)
+                else:
+                    self.set_state_from_supervisor()
+                    self._clean_up()
+                    exit_func = True
 
-        threadLock.release()
+                if not exit_func:
+                    if self._previous_node_stats is None:
+                        self._node_stats_time = datetime.now()
+                        self._previous_node_stats = node_stats
+                        self._node_stats = node_stats
+                    else:
+                        if node_stats['lastBlockHeight'] > self._previous_node_stats['lastBlockHeight']:
+                            self._previous_node_stats = self._node_stats
+                            self._node_stats = node_stats
+                            self._node_stats_time = datetime.now()
+        except Exception as ex:
+            if isinstance(ex, JcliError):
+                raise ex
+        finally:
+            threadLock.release()
+
         return self._node_stats
 
     # executes jcli and gets leaders - tells if the node runs as a leader or not
     def _get_leaders(self):
-        if threadLock.locked():
-            return None
+        try:
+            threadLock.acquire()
+            if self._state == State.STARTED:
+                command = [self._jcli, "rest", "v0", "leaders", "get", "-h", self._host, "--output-format", "json"]
+                proc = Popen(command, stdout=PIPE, stderr=PIPE)
 
-        threadLock.acquire()
+                stdout, stderr = proc.communicate()
+                if proc.returncode != 0:
+                    raise JcliError('An error occurred while getting leaders', err = {'proc_ret_code': proc.returncode, 'err_code': 1, 'stdout': stdout.decode(), 'stderr': stderr.decode()})
 
-        if self._state != State.STARTED:
+                self._leaders = json.loads(stdout.decode())
+
+                self._last_time_check_leaders = datetime.now()
+
+        except Exception as ex:
+            if isinstance(ex, JcliError):
+                raise ex
+        finally:
             threadLock.release()
-            return None
 
-        log.debug("{} state: {}".format(self.get_name(), self._state))
-
-        command = [self._jcli, "rest", "v0", "leaders", "get", "-h", self._host, "--output-format", "json"]
-        proc = Popen(command, stdout=PIPE, stderr=PIPE)
-
-        stdout, stderr = proc.communicate()
-        if proc.returncode != 0:
-            threadLock.release()
-            raise JcliError('An error occurred while getting leaders', err = {'proc_ret_code': proc.returncode, 'err_code': 1, 'stdout': stdout.decode(), 'stderr': stderr.decode()})
-
-        self._leaders = json.loads(stdout.decode())
-
-        self._last_time_check_leaders = datetime.now()
-
-        threadLock.release()
         return self._leaders
 
     def get_last_block(self):
@@ -199,7 +198,7 @@ class Jormungandr(threading.Thread):
 
             return stdout.decode()
         else:
-            log.error('Cannot get block. {} is not running.'.format(self.get_name()))
+            log.warning('Cannot get block. {} is not running.'.format(self.get_name()))
 
     def get_supervisor_service_uptime(self):
         proc_info = self._server.supervisor.getProcessInfo(self._supervisor_service_name)
@@ -284,11 +283,11 @@ class Jormungandr(threading.Thread):
             return False    # we don't have the info yet
 
         if self._previous_node_stats['lastBlockHeight'] == int(self._node_stats['lastBlockHeight']) and (datetime.now() - self._node_stats_time).seconds > self._tip_timeout:
-            log.warn("Node's tip has been the same ({}) for {} seconds.".format(self._node_stats['lastBlockHeight'], self._tip_timeout))
+            log.warning("Node's tip has been the same ({}) for {} seconds.".format(self._node_stats['lastBlockHeight'], self._tip_timeout))
             return True
 
         if abs(int(self._node_stats['lastBlockHeight']) - max_tip) > self._tip_diff_threshold:
-            log.warn("Node is off by more than {} from max tip {}".format(self._tip_diff_threshold, max_tip))
+            log.warning("Node is off by more than {} from max tip {}".format(self._tip_diff_threshold, max_tip))
             return True
 
         return False
@@ -370,51 +369,55 @@ class Jormungandr(threading.Thread):
         return self._get_leaders()
 
     def unregister_leader(self, id):
-        threadLock.acquire()
-        if self.get_state() != State.STARTED:
-            threadLock.release()
-            return
+        try:
+            threadLock.acquire()
 
-        command = [self._jcli, "rest", "v0", "leaders", "delete", str(id), "-h", self._host]
-        proc = Popen(command, stdout=PIPE, stderr=PIPE)
-        stdout, stderr = proc.communicate()
-        if proc.returncode != 0:
-            threadLock.release()
-            raise JcliError('An error occurred while deleting leader', err = {'proc_ret_code': proc.returncode, 'err_code': 1, 'stdout': stdout.decode(), 'stderr': stderr.decode()})
-        
-        lines = stdout.decode()
+            if self.get_state() == State.STARTED:
+                command = [self._jcli, "rest", "v0", "leaders", "delete", str(id), "-h", self._host]
+                proc = Popen(command, stdout=PIPE, stderr=PIPE)
+                stdout, stderr = proc.communicate()
+                if proc.returncode != 0:
+                    raise JcliError('An error occurred while deleting leader', err = {'proc_ret_code': proc.returncode, 'err_code': 1, 'stdout': stdout.decode(), 'stderr': stderr.decode()})
 
-        if stdout.decode().lower().find('success') == -1:
-            threadLock.release()
-            raise JcliError('An error occurred while unregistering node leader {}'.format(self.get_name()), err = {'proc_ret_code': proc.returncode, 'err_code': 1, 'stdout': stdout.decode(), 'stderr': stderr.decode()})
+                lines = stdout.decode()
 
-        threadLock.release()
-        self._get_leaders()
-        log.debug("Unregistered leader {}".format(self.get_name()))
+                if stdout.decode().lower().find('success') == -1:
+                    raise JcliError('An error occurred while unregistering node leader {}'.format(self.get_name()), err = {'proc_ret_code': proc.returncode, 'err_code': 1, 'stdout': stdout.decode(), 'stderr': stderr.decode()})
+
+                self._get_leaders()
+                log.debug("Unregistered leader {}".format(self.get_name()))
+        except Exception as ex:
+            if isinstance(ex, JcliError):
+                raise ex
+        finally:
+            threadLock.release()
 
     def register_leader(self):
-        threadLock.acquire()
-        if self.get_state() != State.STARTED:
+        try:
+            result = None
+            threadLock.acquire()
+            if self.get_state() == State.STARTED:
+                command = [self._jcli, "rest", "v0", "leaders", "post", "-f", self._leader_secret_file, "-h", self._host]
+                proc = Popen(command, stdout=PIPE, stderr=PIPE)
+                stdout, stderr = proc.communicate()
+                if proc.returncode != 0:
+                    raise JcliError('An error occurred while registering node {} as leader.'.format(self.get_name()), err = {'proc_ret_code': proc.returncode, 'err_code': 1, 'stdout': stdout.decode(), 'stderr': stderr.decode()})
+
+                leaders = self._get_leaders()
+                if leaders != None:
+                    log.debug("Found registered leader(s): {}".format(len(leaders)))
+                    if len(leaders) == 0:
+                        raise JcliError('Register leader succeeded but leader cannot be found.')
+
+                log.info("Registered node {} as leader.".format(self.get_name()))
+                result = stdout.decode().strip()
+        except Exception as ex:
+            if isinstance(ex, JcliError):
+                raise ex
+        finally:
             threadLock.release()
-            return
 
-        command = [self._jcli, "rest", "v0", "leaders", "post", "-f", self._leader_secret_file, "-h", self._host]
-        proc = Popen(command, stdout=PIPE, stderr=PIPE)
-        stdout, stderr = proc.communicate()
-        if proc.returncode != 0:
-            threadLock.release()
-            raise JcliError('An error occurred while registering node {} as leader.'.format(self.get_name()), err = {'proc_ret_code': proc.returncode, 'err_code': 1, 'stdout': stdout.decode(), 'stderr': stderr.decode()})
-
-        threadLock.release()
-        leaders = self._get_leaders()
-        if leaders != None:
-            log.debug("Found registered leader(s): {}".format(len(leaders)))
-        if leaders != None and len(leaders) == 0:
-            raise JcliError('Register leader succeeded but leader cannot be found.')
-
-        log.info("Registered node {} as leader.".format(self.get_name()))
-
-        return stdout.decode().strip()
+        return result
 
     def run(self):
         log.info("Started thread {}".format(self._node_name))
