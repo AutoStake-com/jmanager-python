@@ -325,18 +325,15 @@ class Manager(threading.Thread):
         return False
 
     def _is_any_other_node_up(self, exclude_node):
-        node_active = False
+        node_up = False
         for n in self.node_threads:
             if n.get_name() == exclude_node.get_name():
                 continue
             if n.get_state() == State.STARTED:
-                node_active = True
+                node_up = True
                 break
 
-        if node_active:
-            return True
-        else:
-            return False
+        return node_up
 
     # if none of the nodes is up then start all nodes
     def _start_all_nodes(self):

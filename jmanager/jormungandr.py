@@ -226,9 +226,9 @@ class Jormungandr(threading.Thread):
         if pcode == 0 or pcode == 40:
             self._set_state(State.STOPPED)
         elif pcode == 20:
-            self._set_state(State.STARTED)
+            pass    # supervisor service may be started, but we don't know the state of jormungandr
         elif pcode == 10:
-            self._set_state(State.BOOTSTRAPPING)
+            pass    # supervisor service may be bootstrapping, but we don't know the state of jormungandr
         else:
             self._set_state(State.UNKNOWN)
 
@@ -431,7 +431,7 @@ class Jormungandr(threading.Thread):
                     self.switch_to_fast_bootstrap()
             except JcliError as e:
                 e.print_error()
-                if e._errors['err_code'] == JError.FAILED_REST_REQUEST or e._errors['err_code'] == JError.ADDRESS_ALREADY_IN_USE:
+                if (e._errors['err_code'] == JError.FAILED_REST_REQUEST and self.get_state() == State.STARTED) or e._errors['err_code'] == JError.ADDRESS_ALREADY_IN_USE:
                     self.stop_node(force=True, reason='JcliError: {}'.format(e._errors['err_code']))
             finally:
                 time.sleep(self._refresh_interval)

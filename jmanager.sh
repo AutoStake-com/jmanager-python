@@ -6,8 +6,8 @@ jgpid=`echo $!`
 
 # Stop script
 stop_script() {
-    sleep 5
     kill $jgpid
+    sleep 5
     exit 0
 }
 # Wait for supervisor to stop script
