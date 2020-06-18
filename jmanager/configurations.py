@@ -17,6 +17,8 @@ class Configurations():
     def _fillTemplate(self, template, obj):
         if type(obj) is list:
             for idx in range(len(obj)):
+                if len(template) < len(obj):
+                    template.append(obj[idx])
                 self._fillTemplate(template[idx], obj[idx])
         elif type(obj) is dict:
             for key in obj.keys():

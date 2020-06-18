@@ -103,9 +103,10 @@ class Manager(threading.Thread):
             # check if the current node with the max tip is still the node with the max tip - difference must be at least 2
             # since the stats can be old a few seconds and not syncrhonized and we don't want
             # to switch between nodes too often for nothing
-            if node_with_max_tip == None or (node.get_tip() - 3) >= self._get_nodes_max_tip():
-                if node_with_max_tip != None:
-                    log.debug('Change to node with max tip: {}:{} ==>  {}:{}'.format(node_with_max_tip.get_name(), self._get_nodes_max_tip(), node.get_name(), node.get_tip()))
+            if node_with_max_tip == None:
+                node_with_max_tip = node
+            elif (node.get_tip() - 3) >= node_with_max_tip.get_tip():
+                log.debug('Change to node with max tip: {}:{} ==>  {}:{}'.format(node_with_max_tip.get_name(), node_with_max_tip.get_tip(), node.get_name(), node.get_tip()))
                 node_with_max_tip = node
 
             # if node is a leader add it to the leaders list
@@ -120,7 +121,7 @@ class Manager(threading.Thread):
                 node_with_max_tip.register_leader()
                 log.info("Registered leader {}.".format(node_with_max_tip.get_name()))
                 self._leader_nodes[0]['node'].unregister_leader(self._leader_nodes[0]['id'])
-                log.info("Unregistered leader {}.".format(self._leader_nodes[0]['node'].get_name()))                
+                log.info("Unregistered leader {}.".format(self._leader_nodes[0]['node'].get_name()))
         elif leaders_count > 1:
             log.warning("Got multiple ({}) leaders!".format(leaders_count))
             for leader in self._leader_nodes:
